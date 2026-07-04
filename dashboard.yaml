@@ -1,0 +1,416 @@
+# Echo Show 5 Bedside Dashboard — Home Assistant Lovelace config
+# Paste into a new dashboard via the Raw Configuration Editor.
+# The dashboard URL path must contain a hyphen (e.g. `bedside-panel`)
+# because the navbar routes below point at /bedside-panel/<view>.
+# Replace the placeholder entities with your own — see README.
+
+views:
+- title: Home
+  path: home
+  icon: mdi:clock-digital
+  type: panel
+  background:
+    image: /local/bedside/bg.jpg
+    size: cover
+    alignment: center
+    repeat: no-repeat
+    attachment: fixed
+  cards:
+  - type: vertical-stack
+    cards:
+    - type: markdown
+      content: '# {{ now().strftime(''%-I:%M'') }}
+
+
+        ## {{ now().strftime(''%A, %B %-d'') }}'
+      card_mod:
+        style:
+          .: 'ha-card { background: none !important; border: none !important; box-shadow: none !important; margin-top: 0px; }'
+          ha-markdown$: 'h1 { font-size: 104px; font-weight: 500; text-align: center; color: #ffffff; margin: 0; line-height: 1.02; text-shadow: 0 4px 28px rgba(0,0,0,0.35); } h2 { font-size: 26px; font-weight: 400; text-align: center; color: #ffffff; margin: 0; text-shadow: 0 2px 16px rgba(0,0,0,0.35); }'
+    - type: custom:mushroom-chips-card
+      alignment: center
+      chips:
+      - type: weather
+        entity: weather.home
+        show_conditions: true
+        show_temperature: true
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: lock.front_door
+          state: unlocked
+        chip:
+          type: template
+          entity: lock.front_door
+          icon: mdi:lock-open-variant
+          icon_color: red
+          content: Front Door Unlocked
+          tap_action:
+            action: more-info
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.doorbell_package_detected
+          state: 'on'
+        chip:
+          type: template
+          entity: camera.doorbell_package_camera
+          icon: mdi:package-variant-closed
+          icon_color: amber
+          content: Package at Door
+          tap_action:
+            action: navigate
+            navigation_path: /bedside-panel/cctv
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.nursery_camera_baby_cry_detected
+          state: 'on'
+        chip:
+          type: template
+          entity: binary_sensor.nursery_camera_baby_cry_detected
+          icon: mdi:baby-face-outline
+          icon_color: red
+          content: Baby Crying
+          tap_action:
+            action: navigate
+            navigation_path: /bedside-panel/baby
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sun.sun
+        state: above_horizon
+      card:
+        type: sensor
+        entity: sensor.solar_current_power_production
+        name: Solar
+        icon: mdi:solar-power
+        graph: line
+        hours_to_show: 8
+        detail: 1
+        card_mod:
+          style: 'ha-card { background: rgba(0,0,0,0.28) !important; border: none !important; box-shadow: none !important; width: 300px; height: 148px; overflow: hidden; margin: 2px auto 0; border-radius: 16px; --accent-color: #FFB74D; --primary-text-color: #fff; --secondary-text-color: rgba(255,255,255,0.7); }'
+    - type: custom:navbar-card
+      desktop:
+        position: right
+        show_labels: false
+      mobile:
+        show_labels: false
+      media_player:
+        players:
+        - entity: media_player.vaca_media_player
+          show: '[[[ return [''playing'',''paused'',''buffering''].includes(states[''media_player.vaca_media_player'']?.state) ]]]'
+      routes:
+      - url: /bedside-panel/home
+        icon: mdi:home
+        label: Home
+      - url: /bedside-panel/baby
+        icon: mdi:baby-carriage
+        label: Baby
+        badge:
+          show: '[[[ return states[''binary_sensor.nursery_camera_baby_cry_detected'']?.state === ''on'' ]]]'
+          color: '#f44336'
+      - url: /bedside-panel/cctv
+        icon: mdi:cctv
+        label: CCTV
+      - url: /bedside-panel/controls
+        icon: mdi:air-conditioner
+        label: A/C
+      - icon: '[[[ return (states[''light.bedside_lamp_left'']?.state === ''on'' || states[''light.bedside_lamp_right'']?.state === ''on'') ? ''mdi:lightbulb'' : ''mdi:lightbulb-outline'' ]]]'
+        label: Lamps
+        tap_action:
+          action: call-service
+          service: light.toggle
+          target:
+            entity_id:
+            - light.bedside_lamp_left
+            - light.bedside_lamp_right
+- title: Baby
+  path: baby
+  icon: mdi:baby-carriage
+  type: panel
+  background:
+    image: /local/bedside/bg.jpg
+    size: cover
+    alignment: center
+    repeat: no-repeat
+    attachment: fixed
+  cards:
+  - type: vertical-stack
+    cards:
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.nursery_camera_baby_cry_detected
+        state: 'on'
+      card:
+        type: markdown
+        content: '# BABY IS CRYING'
+        card_mod:
+          style:
+            .: '@keyframes cryflash { 0%, 100% { background-color: #e53935; } 50% { background-color: #7f0e0e; } } ha-card { border: none !important; border-radius: 0 !important; animation: cryflash 1.1s ease-in-out infinite; box-shadow: 0 4px 20px rgba(211,47,47,0.6) !important; }'
+            ha-markdown$: 'h1 { color: #ffffff; font-size: 26px; text-align: center; margin: 4px 0; font-weight: 800; letter-spacing: 3px; }'
+    - type: custom:advanced-camera-card
+      cameras:
+      - camera_entity: camera.nursery_camera
+        live_provider: ha
+        title: Cot
+      view:
+        default: live
+      menu:
+        style: hidden
+      performance:
+        profile: low
+    - type: custom:navbar-card
+      desktop:
+        position: right
+        show_labels: false
+      mobile:
+        show_labels: false
+      media_player:
+        players:
+        - entity: media_player.vaca_media_player
+          show: '[[[ return [''playing'',''paused'',''buffering''].includes(states[''media_player.vaca_media_player'']?.state) ]]]'
+      routes:
+      - url: /bedside-panel/home
+        icon: mdi:home
+        label: Home
+      - url: /bedside-panel/baby
+        icon: mdi:baby-carriage
+        label: Baby
+        badge:
+          show: '[[[ return states[''binary_sensor.nursery_camera_baby_cry_detected'']?.state === ''on'' ]]]'
+          color: '#f44336'
+      - url: /bedside-panel/cctv
+        icon: mdi:cctv
+        label: CCTV
+      - url: /bedside-panel/controls
+        icon: mdi:air-conditioner
+        label: A/C
+      - icon: '[[[ return (states[''light.bedside_lamp_left'']?.state === ''on'' || states[''light.bedside_lamp_right'']?.state === ''on'') ? ''mdi:lightbulb'' : ''mdi:lightbulb-outline'' ]]]'
+        label: Lamps
+        tap_action:
+          action: call-service
+          service: light.toggle
+          target:
+            entity_id:
+            - light.bedside_lamp_left
+            - light.bedside_lamp_right
+- title: CCTV
+  path: cctv
+  icon: mdi:cctv
+  type: panel
+  background:
+    image: /local/bedside/bg.jpg
+    size: cover
+    alignment: center
+    repeat: no-repeat
+    attachment: fixed
+  cards:
+  - type: vertical-stack
+    cards:
+    - type: picture-entity
+      entity: camera.front_camera
+      camera_image: camera.front_camera
+      camera_view: auto
+      aspect_ratio: '3.45'
+      show_name: false
+      show_state: false
+      tap_action:
+        action: more-info
+      card_mod:
+        style:
+          .: 'ha-card { border-radius: 14px; border: none; }'
+          hui-image$: 'img { object-position: 50% 0%; }'
+    - type: horizontal-stack
+      cards:
+      - type: picture-entity
+        entity: camera.doorbell_low_res
+        camera_image: camera.doorbell_low_res
+        camera_view: auto
+        aspect_ratio: '1.85'
+        show_name: false
+        show_state: false
+        tap_action:
+          action: more-info
+        card_mod:
+          style:
+            .: 'ha-card { border-radius: 14px; border: none; }'
+            hui-image$: 'img { object-position: 50% 70%; }'
+      - type: picture-entity
+        entity: camera.side_camera
+        camera_image: camera.side_camera
+        camera_view: auto
+        aspect_ratio: '1.85'
+        show_name: false
+        show_state: false
+        tap_action:
+          action: more-info
+        card_mod:
+          style:
+            .: 'ha-card { border-radius: 14px; border: none; }'
+            hui-image$: 'img { object-position: 50% 50%; }'
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.doorbell_package_detected
+          state: 'on'
+        card:
+          type: picture-entity
+          entity: camera.doorbell_package_camera
+          camera_image: camera.doorbell_package_camera
+          camera_view: auto
+          aspect_ratio: '1.85'
+          show_name: false
+          show_state: false
+          tap_action:
+            action: more-info
+          card_mod:
+            style:
+              .: 'ha-card { border-radius: 14px; border: none; }'
+              hui-image$: 'img { object-position: 50% 50%; }'
+    - type: custom:navbar-card
+      desktop:
+        position: right
+        show_labels: false
+      mobile:
+        show_labels: false
+      media_player:
+        players:
+        - entity: media_player.vaca_media_player
+          show: '[[[ return [''playing'',''paused'',''buffering''].includes(states[''media_player.vaca_media_player'']?.state) ]]]'
+      routes:
+      - url: /bedside-panel/home
+        icon: mdi:home
+        label: Home
+      - url: /bedside-panel/baby
+        icon: mdi:baby-carriage
+        label: Baby
+        badge:
+          show: '[[[ return states[''binary_sensor.nursery_camera_baby_cry_detected'']?.state === ''on'' ]]]'
+          color: '#f44336'
+      - url: /bedside-panel/cctv
+        icon: mdi:cctv
+        label: CCTV
+      - url: /bedside-panel/controls
+        icon: mdi:air-conditioner
+        label: A/C
+      - icon: '[[[ return (states[''light.bedside_lamp_left'']?.state === ''on'' || states[''light.bedside_lamp_right'']?.state === ''on'') ? ''mdi:lightbulb'' : ''mdi:lightbulb-outline'' ]]]'
+        label: Lamps
+        tap_action:
+          action: call-service
+          service: light.toggle
+          target:
+            entity_id:
+            - light.bedside_lamp_left
+            - light.bedside_lamp_right
+- title: Controls
+  path: controls
+  icon: mdi:air-conditioner
+  type: sections
+  max_columns: 2
+  background:
+    image: /local/bedside/bg.jpg
+    size: cover
+    alignment: center
+    repeat: no-repeat
+    attachment: fixed
+  sections:
+  - type: grid
+    cards:
+    - type: thermostat
+      entity: climate.bedroom
+      name: Bedroom AC
+      features:
+      - type: climate-hvac-modes
+        hvac_modes:
+        - cool
+        - heat
+        - fan_only
+        - 'off'
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: custom:stack-in-card
+      mode: horizontal
+      cards:
+      - type: button
+        entity: light.bedside_lamp_left
+        name: Left
+        icon: mdi:lamp
+        show_state: false
+        icon_height: 44px
+        tap_action:
+          action: toggle
+      - type: button
+        entity: light.bedside_lamp_right
+        name: Right
+        icon: mdi:lamp
+        show_state: false
+        icon_height: 44px
+        tap_action:
+          action: toggle
+      - type: button
+        name: Both
+        icon: mdi:lightbulb-group
+        icon_height: 44px
+        tap_action:
+          action: call-service
+          service: light.toggle
+          target:
+            entity_id:
+            - light.bedside_lamp_left
+            - light.bedside_lamp_right
+      grid_options:
+        columns: full
+    - type: custom:mini-media-player
+      entity: media_player.bedroom_speaker
+      name: Bedroom Beam
+      icon: mdi:soundbar
+      hide:
+        info: true
+        power: true
+        source: true
+        controls: true
+        name: true
+        icon: true
+      grid_options:
+        columns: full
+      card_mod:
+        style: 'ha-card { padding: 10px 6px !important; border-radius: 14px; }'
+    - type: custom:navbar-card
+      desktop:
+        position: right
+        show_labels: false
+      mobile:
+        show_labels: false
+      media_player:
+        players:
+        - entity: media_player.vaca_media_player
+          show: '[[[ return [''playing'',''paused'',''buffering''].includes(states[''media_player.vaca_media_player'']?.state) ]]]'
+      routes:
+      - url: /bedside-panel/home
+        icon: mdi:home
+        label: Home
+      - url: /bedside-panel/baby
+        icon: mdi:baby-carriage
+        label: Baby
+        badge:
+          show: '[[[ return states[''binary_sensor.nursery_camera_baby_cry_detected'']?.state === ''on'' ]]]'
+          color: '#f44336'
+      - url: /bedside-panel/cctv
+        icon: mdi:cctv
+        label: CCTV
+      - url: /bedside-panel/controls
+        icon: mdi:air-conditioner
+        label: A/C
+      - icon: '[[[ return (states[''light.bedside_lamp_left'']?.state === ''on'' || states[''light.bedside_lamp_right'']?.state === ''on'') ? ''mdi:lightbulb'' : ''mdi:lightbulb-outline'' ]]]'
+        label: Lamps
+        tap_action:
+          action: call-service
+          service: light.toggle
+          target:
+            entity_id:
+            - light.bedside_lamp_left
+            - light.bedside_lamp_right
