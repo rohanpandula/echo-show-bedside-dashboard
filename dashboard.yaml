@@ -3,7 +3,11 @@
 # The dashboard URL path must contain a hyphen (e.g. `bedside-panel`)
 # because the navbar routes below point at /bedside-panel/<view>.
 # Replace the placeholder entities with your own — see README.
+# kiosk_mode (requires the HACS kiosk-mode plugin) hides the HA header;
+# append ?disable_km to the URL when you need the header back to edit.
 
+kiosk_mode:
+  kiosk: true
 views:
 - title: Home
   path: home

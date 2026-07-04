@@ -36,6 +36,7 @@ The right-side navbar is icon-only with two extras: a media player widget that a
 - [stack-in-card](https://github.com/custom-cards/stack-in-card)
 - [mini-media-player](https://github.com/kalkih/mini-media-player)
 - [Advanced Camera Card](https://github.com/dermotduffy/advanced-camera-card)
+- [kiosk-mode](https://github.com/NemesisRE/kiosk-mode) (hides the HA header on this dashboard; use `?disable_km` in the URL when editing)
 
 Everything else is native HA cards on purpose — the Echo Show's SoC is weak, and this dashboard is deliberately light (snapshot tiles instead of streams on the CCTV grid, one live stream max at a time, no heavy animations).
 
